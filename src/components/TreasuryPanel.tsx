@@ -11,20 +11,34 @@ export const TreasuryPanel = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("TreasuryPanel: Fetching wallet and transaction data...");
         const [balanceData, transactionsData] = await Promise.all([
           getWalletBalance(),
           getTransactions(),
         ]);
+        console.log("TreasuryPanel: Received balance:", balanceData);
+        console.log("TreasuryPanel: Received transactions:", transactionsData);
         setBalance(balanceData);
         setTransactions(transactionsData);
       } catch (error) {
-        console.error("Failed to fetch treasury data:", error);
+        console.error("TreasuryPanel: Failed to fetch treasury data:", error);
+        // Still set loading to false even on error
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
+
+    // Listen for refresh events
+    const handleRefresh = () => {
+      console.log("TreasuryPanel: Refresh triggered");
+      setLoading(true);
+      fetchData();
+    };
+
+    window.addEventListener('refreshTreasury', handleRefresh);
+    return () => window.removeEventListener('refreshTreasury', handleRefresh);
   }, []);
 
   const getStatusIcon = (status: string) => {

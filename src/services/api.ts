@@ -116,28 +116,51 @@ export const analyzeInvoiceStreaming = async (
   }
 
   let result: InvoiceAnalysisResult | null = null;
+  let buffer = ''; // Buffer for incomplete lines
 
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      // Decode chunk and add to buffer
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split by newlines but keep the last incomplete line in buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep last incomplete line
 
       for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = JSON.parse(line.slice(6));
-          onProgress(data);
+        if (line.trim().startsWith('data: ')) {
+          try {
+            const jsonStr = line.trim().slice(6);
+            const data = JSON.parse(jsonStr);
+            onProgress(data);
 
-          if (data.type === 'complete') {
-            result = data.result as InvoiceAnalysisResult;
-          }
+            if (data.type === 'complete') {
+              result = data.result as InvoiceAnalysisResult;
+            }
 
-          if (data.type === 'error') {
-            throw new Error(data.message);
+            if (data.type === 'error') {
+              throw new Error(data.message);
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE line:', line, e);
           }
         }
+      }
+    }
+
+    // Process any remaining buffer
+    if (buffer.trim().startsWith('data: ')) {
+      try {
+        const data = JSON.parse(buffer.trim().slice(6));
+        onProgress(data);
+        if (data.type === 'complete') {
+          result = data.result as InvoiceAnalysisResult;
+        }
+      } catch (e) {
+        console.error('Failed to parse final SSE line:', buffer, e);
       }
     }
   } finally {
@@ -152,16 +175,55 @@ export const analyzeInvoiceStreaming = async (
 };
 
 /**
+ * Get invoice analysis history
+ */
+export const getInvoiceHistory = async (): Promise<InvoiceAnalysisResult[]> => {
+  const url = `${API_BASE_URL}/api/invoices/history`;
+  console.log('getInvoiceHistory: Fetching from', url);
+
+  try {
+    const response = await fetch(url);
+    console.log('getInvoiceHistory: Response status', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('getInvoiceHistory: Error response', errorText);
+      throw new Error(`Failed to fetch invoice history: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('getInvoiceHistory: Success, got', data.length, 'invoices');
+    return data;
+  } catch (error) {
+    console.error('getInvoiceHistory: Fetch error', error);
+    throw error;
+  }
+};
+
+/**
  * Get threat analytics from the backend
  */
 export const getThreatAnalytics = async (): Promise<ThreatAnalytics> => {
-  const response = await fetch(`${API_BASE_URL}/api/threats/analytics`);
+  const url = `${API_BASE_URL}/api/threats/analytics`;
+  console.log('getThreatAnalytics: Fetching from', url);
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch threat analytics');
+  try {
+    const response = await fetch(url);
+    console.log('getThreatAnalytics: Response status', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('getThreatAnalytics: Error response', errorText);
+      throw new Error(`Failed to fetch threat analytics: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('getThreatAnalytics: Success', data);
+    return data;
+  } catch (error) {
+    console.error('getThreatAnalytics: Fetch error', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 /**

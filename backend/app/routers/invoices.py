@@ -10,9 +10,12 @@ from app.models import InvoiceAnalysisResult, Transaction
 from app.analyzer import InvoiceAnalyzer
 from app.storage import (
     save_invoice,
+    get_invoice,
     save_transaction,
-    update_wallet_balance
+    update_wallet_balance,
+    invoices_db
 )
+from typing import List
 from app.routers.threats import report_threat
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
@@ -190,6 +193,8 @@ async def analyze_invoice_stream(file: UploadFile = File(...)):
                     from app.models import InvoiceAnalysisResult
                     result = InvoiceAnalysisResult(**result_data)
                     save_invoice(result)
+                    print(f"✓ Saved invoice {result.invoiceId} to database")
+                    print(f"✓ Total invoices in DB: {len(invoices_db)}")
 
                     # Create transaction
                     transaction = Transaction(
@@ -224,8 +229,19 @@ async def analyze_invoice_stream(file: UploadFile = File(...)):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable buffering for nginx/proxies
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "*",
         }
     )
+
+
+@router.get("/history", response_model=List[InvoiceAnalysisResult])
+async def get_invoice_history():
+    """Get all analyzed invoices
+
+    Returns:
+        List of all invoice analysis results
+    """
+    return list(invoices_db.values())

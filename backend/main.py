@@ -16,17 +16,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
-origins = [
-    "http://localhost:5173",  # Vite dev server
-    "http://localhost:3000",  # Alternative dev port
-    "http://localhost:8000",  # FastAPI docs
-]
-
+# Configure CORS - allow all origins for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

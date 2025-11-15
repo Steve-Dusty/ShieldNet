@@ -1,8 +1,20 @@
 import { InvoiceAnalysis } from "@/components/InvoiceAnalysis";
 import { TreasuryPanel } from "@/components/TreasuryPanel";
 import { Shield, FileCheck, Wallet } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const InvoiceProtection = () => {
+  const navigate = useNavigate();
+
+  const handleAnalysisComplete = () => {
+    console.log("InvoiceProtection: Analysis complete, navigating to threat analytics");
+
+    // Navigate to threat analytics page after a brief delay to ensure backend saves complete
+    setTimeout(() => {
+      navigate('/threat-analytics');
+    }, 800);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-blue-950/30">
       <main className="container mx-auto px-6 py-8">
@@ -21,7 +33,7 @@ const InvoiceProtection = () => {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InvoiceAnalysis />
+          <InvoiceAnalysis onAnalysisComplete={handleAnalysisComplete} />
           <TreasuryPanel />
         </div>
 

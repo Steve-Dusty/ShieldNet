@@ -10,6 +10,30 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("platform");
+
+  const handleAnalysisComplete = () => {
+    console.log("handleAnalysisComplete called");
+    console.log("Current tab:", activeTab);
+
+    // Trigger refresh of ThreatAnalytics
+    window.dispatchEvent(new Event('refreshThreatAnalytics'));
+
+    // Switch to analytics tab after a short delay to ensure refresh starts
+    setTimeout(() => {
+      setActiveTab("analytics");
+      console.log("Switched to analytics tab");
+    }, 100);
+  };
+
+  // Also refresh when switching to analytics tab manually
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "analytics") {
+      window.dispatchEvent(new Event('refreshThreatAnalytics'));
+    }
+  };
+
   return (
     <div className="min-h-screen relative">
       {/* Animated PDF Scanning Background */}
@@ -45,7 +69,7 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8 relative z-10">
-        <Tabs defaultValue="platform" className="w-full">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 bg-card/50 backdrop-blur-xl border border-border/50 p-1">
             <TabsTrigger 
               value="platform" 
@@ -107,7 +131,7 @@ const Index = () => {
 
             {/* Invoice & Treasury Interface */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <InvoiceAnalysis />
+              <InvoiceAnalysis onAnalysisComplete={handleAnalysisComplete} />
               <TreasuryPanel />
             </section>
 
