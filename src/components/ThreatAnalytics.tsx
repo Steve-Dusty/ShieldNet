@@ -283,7 +283,7 @@ export const ThreatAnalytics = () => {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-400 mb-2">Fraud Avoided</p>
-              <h3 className="text-3xl font-bold text-white">${(data.totalBlockedAmount / 1000000).toFixed(1)}M</h3>
+              <h3 className="text-3xl font-bold text-white">${data.totalBlockedAmount.toFixed(2)}</h3>
               <p className="text-sm text-primary mt-1">Total USDC protected</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-badge-orange flex items-center justify-center shadow-lg shadow-orange-500/40">
