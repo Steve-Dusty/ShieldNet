@@ -1,6 +1,7 @@
 """In-memory storage for all application data"""
 from typing import Dict, List
 from datetime import datetime
+import uuid
 from app.models import (
     InvoiceAnalysisResult,
     ThreatRecord,
@@ -32,8 +33,10 @@ wallet_state = {
 
 
 def save_invoice(invoice: InvoiceAnalysisResult) -> None:
-    """Save invoice analysis result"""
-    invoices_db[invoice.invoiceId] = invoice
+    """Save invoice analysis result - uses UUID to ensure unique storage"""
+    # Generate a unique key combining timestamp and UUID to prevent overwrites
+    unique_key = f"{invoice.invoiceId}_{datetime.now().timestamp()}_{uuid.uuid4().hex[:8]}"
+    invoices_db[unique_key] = invoice
 
 
 def get_invoice(invoice_id: str) -> InvoiceAnalysisResult | None:

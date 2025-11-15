@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { AlertTriangle, TrendingUp, Shield, DollarSign, FileText, CheckCircle, XCircle, Clock } from "lucide-react";
+import { AlertTriangle, TrendingUp, Shield, DollarSign, FileText, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { getThreatAnalytics, getInvoiceHistory, ThreatAnalytics as ThreatAnalyticsData, InvoiceAnalysisResult } from "@/services/api";
 
@@ -9,6 +9,7 @@ export const ThreatAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,6 +120,18 @@ export const ThreatAnalytics = () => {
     }
   };
 
+  const toggleInvoiceExpanded = (invoiceId: string) => {
+    setExpandedInvoices(prev => {
+      const next = new Set(prev);
+      if (next.has(invoiceId)) {
+        next.delete(invoiceId);
+      } else {
+        next.add(invoiceId);
+      }
+      return next;
+    });
+  };
+
   console.log("ThreatAnalytics: Rendering with invoiceHistory:", invoiceHistory);
 
   return (
@@ -145,56 +158,114 @@ export const ThreatAnalytics = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {invoiceHistory.map((invoice) => (
-              <div
-                key={invoice.invoiceId}
-                className="p-5 rounded-2xl bg-gray-900/40 border border-gray-800 hover:bg-gray-900/60 transition-all"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(invoice.status)}
-                    <div>
-                      <h3 className="text-lg font-bold text-white">{invoice.vendor}</h3>
-                      <p className="text-sm text-gray-400">Invoice ID: {invoice.invoiceId}</p>
+            {invoiceHistory.map((invoice) => {
+              const isExpanded = expandedInvoices.has(invoice.invoiceId);
+              return (
+                <div
+                  key={invoice.invoiceId}
+                  className="p-5 rounded-2xl bg-gray-900/40 border border-gray-800 hover:bg-gray-900/60 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {getStatusIcon(invoice.status)}
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{invoice.vendor}</h3>
+                        <p className="text-sm text-gray-400">Invoice ID: {invoice.invoiceId}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-white">
+                        ${invoice.amount.toLocaleString()} {invoice.currency}
+                      </p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase border mt-2 ${getStatusBadge(invoice.status)}`}>
+                        {invoice.status}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-white">
-                      ${invoice.amount.toLocaleString()} {invoice.currency}
-                    </p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase border mt-2 ${getStatusBadge(invoice.status)}`}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                </div>
 
-                <p className="text-sm text-gray-300 mb-3">{invoice.explanation}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
+                    <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
+                      <p className="text-xs text-gray-400 mb-1">Fraud Score</p>
+                      <p className={`text-lg font-bold ${invoice.fraudScore > 70 ? 'text-loss' : invoice.fraudScore > 40 ? 'text-badge-orange' : 'text-success'}`}>
+                        {invoice.fraudScore}/100
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
+                      <p className="text-xs text-gray-400 mb-1">Confidence</p>
+                      <p className="text-lg font-bold text-white">{invoice.confidence}%</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
+                      <p className="text-xs text-gray-400 mb-1">Checks</p>
+                      <p className="text-lg font-bold text-white">
+                        {invoice.localChecks.filter(c => c.status === 'pass').length}/{invoice.localChecks.length}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
-                    <p className="text-xs text-gray-400 mb-1">Fraud Score</p>
-                    <p className={`text-lg font-bold ${invoice.fraudScore > 70 ? 'text-loss' : invoice.fraudScore > 40 ? 'text-badge-orange' : 'text-success'}`}>
-                      {invoice.fraudScore}/100
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
-                    <p className="text-xs text-gray-400 mb-1">Confidence</p>
-                    <p className="text-lg font-bold text-white">{invoice.confidence}%</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-black/40 border border-gray-700">
-                    <p className="text-xs text-gray-400 mb-1">Checks</p>
-                    <p className="text-lg font-bold text-white">
-                      {invoice.localChecks.filter(c => c.status === 'pass').length}/{invoice.localChecks.length}
-                    </p>
-                  </div>
+                  <button
+                    onClick={() => toggleInvoiceExpanded(invoice.invoiceId)}
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-black/40 border border-gray-700 hover:bg-black/60 transition-colors"
+                  >
+                    <span className="text-sm font-semibold text-white">AI Decision Explanation</span>
+                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-3 p-4 rounded-lg bg-black/60 border border-gray-700 space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-primary mb-2">Summary</h4>
+                        <p className="text-sm text-gray-300 leading-relaxed">{invoice.explanation}</p>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-semibold text-primary mb-2">Local Checks</h4>
+                        <div className="space-y-2">
+                          {invoice.localChecks.map((check, idx) => (
+                            <div key={idx} className="p-3 rounded-lg bg-gray-900/60 border border-gray-700">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-sm font-semibold text-white">{check.name}</span>
+                                <span className={`text-xs font-semibold uppercase px-2 py-1 rounded ${
+                                  check.status === 'pass' ? 'bg-success/20 text-success' :
+                                  check.status === 'fail' ? 'bg-loss/20 text-loss' :
+                                  'bg-badge-orange/20 text-badge-orange'
+                                }`}>
+                                  {check.status}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-400">{check.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-semibold text-primary mb-2">Network Signals</h4>
+                        <div className="space-y-2">
+                          {invoice.networkSignals.map((signal, idx) => (
+                            <div key={idx} className="p-3 rounded-lg bg-gray-900/60 border border-gray-700">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`w-2 h-2 rounded-full ${
+                                  signal.type === 'clean' ? 'bg-success' :
+                                  signal.type === 'flagged' ? 'bg-loss' :
+                                  'bg-badge-orange'
+                                }`} />
+                                <span className="text-sm font-semibold text-white capitalize">{signal.type}</span>
+                              </div>
+                              <p className="text-xs text-gray-400">{signal.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-gray-800 bg-black/40 backdrop-blur-sm shadow-lg p-6">
           <div className="flex items-start justify-between">
             <div>
@@ -230,19 +301,6 @@ export const ThreatAnalytics = () => {
             </div>
             <div className="w-12 h-12 rounded-xl bg-badge-purple flex items-center justify-center shadow-lg shadow-purple-500/40">
               <AlertTriangle className="w-6 h-6 text-white" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="border-gray-800 bg-black/40 backdrop-blur-sm shadow-lg p-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm text-gray-400 mb-2">Rewards Earned</p>
-              <h3 className="text-3xl font-bold text-white">${data.rewardsEarned.toLocaleString()}</h3>
-              <p className="text-sm text-primary mt-1">From threat intel sharing</p>
-            </div>
-            <div className="w-12 h-12 rounded-xl bg-badge-green flex items-center justify-center shadow-lg shadow-emerald-500/40">
-              <TrendingUp className="w-6 h-6 text-white" />
             </div>
           </div>
         </Card>
@@ -328,10 +386,9 @@ export const ThreatAnalytics = () => {
               How ShieldNet Network Intelligence Works
             </h3>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Every blocked invoice is anonymized and shared with the ShieldNet network. When other
-              companies' AI agents query and use your threat intelligence to block similar fraud, you
-              earn micro-rewards. This creates a shared immune system where every company benefits
-              from threats caught by others, and early detectors are rewarded for protecting the network.
+              Every blocked invoice is anonymized and shared with the ShieldNet network. This creates
+              a shared immune system where every company benefits from threats caught by others,
+              protecting the entire network from emerging fraud patterns.
             </p>
           </div>
         </div>
