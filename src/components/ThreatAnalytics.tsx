@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle, TrendingUp, Shield, DollarSign } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getThreatAnalytics, ThreatAnalytics as ThreatAnalyticsData } from "@/services/mockApi";
+import { getThreatAnalytics, ThreatAnalytics as ThreatAnalyticsData } from "@/services/api";
 
 export const ThreatAnalytics = () => {
   const [data, setData] = useState<ThreatAnalyticsData | null>(null);

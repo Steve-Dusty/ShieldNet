@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Wallet, CheckCircle, XCircle, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { getWalletBalance, getTransactions, WalletBalance, Transaction } from "@/services/mockApi";
+import { getWalletBalance, getTransactions, WalletBalance, Transaction } from "@/services/api";
 
 export const TreasuryPanel = () => {
   const [balance, setBalance] = useState<WalletBalance | null>(null);

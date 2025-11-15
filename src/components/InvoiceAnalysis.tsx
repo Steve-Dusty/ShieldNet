@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Shield, Network } from "lucide-react";
+import { Upload, FileText, CheckCircle, XCircle, AlertCircle, Shield, Network, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { analyzeInvoice, InvoiceAnalysisResult, reportThreat } from "@/services/mockApi";
+import { analyzeInvoiceStreaming, InvoiceAnalysisResult, reportThreat } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 export const InvoiceAnalysis = () => {
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<InvoiceAnalysisResult | null>(null);
-  const { toast } = useToast();
+  const [progressMessage, setProgressMessage] = useState<string>("");
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const [streamingText, setStreamingText] = useState<string>("");
+  const { toast} = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -20,12 +23,29 @@ export const InvoiceAnalysis = () => {
 
   const handleAnalyze = async () => {
     if (!file) return;
-    
+
     setAnalyzing(true);
+    setProgressMessage("");
+    setCurrentStep(0);
+    setStreamingText("");
+    setResult(null); // Clear previous results
+
     try {
-      const analysisResult = await analyzeInvoice(file);
+      const analysisResult = await analyzeInvoiceStreaming(file, (update) => {
+        console.log("Received update:", update);
+
+        if (update.type === 'progress') {
+          setProgressMessage(update.message);
+          setCurrentStep(update.step);
+        } else if (update.type === 'stream') {
+          setStreamingText(prev => prev + update.text);
+        }
+      });
+
+      console.log("Analysis complete, setting result:", analysisResult);
       setResult(analysisResult);
-      
+      setAnalyzing(false); // Stop analyzing AFTER setting result
+
       // If blocked, report to threat network
       if (analysisResult.status === 'blocked') {
         await reportThreat({
@@ -37,13 +57,13 @@ export const InvoiceAnalysis = () => {
         });
       }
     } catch (error) {
+      console.error("Analysis error:", error);
+      setAnalyzing(false);
       toast({
         title: "Analysis Failed",
-        description: "Failed to analyze invoice. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze invoice. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setAnalyzing(false);
     }
   };
 
@@ -101,7 +121,7 @@ export const InvoiceAnalysis = () => {
       </div>
 
       {/* Upload Section */}
-      {!result && (
+      {!result && !analyzing && (
         <div className="space-y-4">
           <div className="border-2 border-dashed border-gray-700 rounded-2xl p-8 text-center hover:border-primary/50 transition-colors bg-gray-900/20">
             <input
@@ -117,7 +137,7 @@ export const InvoiceAnalysis = () => {
                 {file ? file.name : "Drop invoice file here or click to upload"}
               </p>
               <p className="text-sm text-gray-400">
-                Supports PDF, PNG, JPG (Max 10MB)
+                PDF, PNG, or JPG (Max 10MB)
               </p>
             </label>
           </div>
@@ -129,6 +149,46 @@ export const InvoiceAnalysis = () => {
           >
             {analyzing ? "Analyzing..." : "Analyze Invoice"}
           </Button>
+        </div>
+      )}
+
+      {/* Streaming Analysis Progress */}
+      {analyzing && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Progress Steps */}
+          <div className="p-6 rounded-2xl bg-gray-900/40 border border-gray-800">
+            <div className="flex items-center gap-3 mb-4">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              <h3 className="text-xl font-bold text-white">Analyzing Invoice</h3>
+            </div>
+
+            {/* Current Step */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-gray-400">Step {currentStep} of 5</p>
+                <p className="text-sm text-primary font-semibold">{Math.round((currentStep / 5) * 100)}%</p>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-primary h-full transition-all duration-300"
+                  style={{ width: `${(currentStep / 5) * 100}%` }}
+                />
+              </div>
+              {progressMessage && (
+                <p className="text-white mt-3 font-medium">{progressMessage}</p>
+              )}
+            </div>
+
+            {/* Streaming AI Response */}
+            {streamingText && (
+              <div className="p-4 rounded-xl bg-black/40 border border-gray-700 max-h-64 overflow-y-auto">
+                <p className="text-sm text-gray-400 mb-2 font-semibold">AI Analysis Stream:</p>
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                  {streamingText}
+                </pre>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
