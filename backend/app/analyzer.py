@@ -50,6 +50,8 @@ class InvoiceAnalyzer:
         # Construct the prompt
         prompt = """You are an AI fraud detection agent for ShieldNet, analyzing invoices for potential fraud.
 
+**IMPORTANT: This system is in testing mode. Low amounts (under $1) are acceptable for mainnet testing and should NOT be flagged as fraud simply because they are low. Focus on actual fraud indicators like suspicious vendor names, duplicate charges, or inflated quantities - not the amount itself.**
+
 Analyze this invoice thoroughly and extract the following information:
 
 1. **Basic Information:**
@@ -67,21 +69,22 @@ Analyze this invoice thoroughly and extract the following information:
    - PO Match: Does this match purchase orders? (pass/fail/warning)
    - Hours Verification: Are hours reasonable? (pass/fail/warning)
    - Vendor Trust: Is this a trusted vendor? (pass/fail/warning)
-   - Amount Reasonableness: Is the amount reasonable? (pass/fail/warning)
    - Line Item Review: Do line items look legitimate? (pass/fail/warning)
+   - Format Validity: Does the invoice format look legitimate? (pass/fail/warning)
 
-4. **Fraud Indicators** to check for:
-   - Inflated hours or quantities
+4. **Fraud Indicators** to check for (IGNORE low amounts):
    - Duplicate charges
-   - Suspicious vendor names
-   - Missing purchase order references
-   - Unusual amounts
+   - Suspicious or fake vendor names
+   - Missing or invalid invoice numbers
    - Template similarities to known fraud
+   - Inconsistent information
 
 5. **Decision Rules:**
-   - APPROVED: fraud_score < 30, all critical checks pass
+   - APPROVED: fraud_score < 30, no critical red flags
    - HOLD: fraud_score 30-70, or warning flags present
-   - BLOCKED: fraud_score > 70, or failed critical checks
+   - BLOCKED: fraud_score > 70, or clear fraud indicators
+
+   **Note: Low amounts alone are NOT a reason to block or hold. Approve low-amount invoices if they otherwise look legitimate.**
 
 Return your analysis in this EXACT JSON format:
 {
@@ -98,7 +101,7 @@ Return your analysis in this EXACT JSON format:
   ]
 }
 
-Be thorough and realistic in your analysis. Look for actual fraud indicators."""
+Be thorough but remember: low amounts are acceptable for testing. Focus on real fraud indicators."""
 
         yield {"type": "progress", "message": "Sending to Claude AI for analysis...", "step": 2}
 
@@ -207,6 +210,8 @@ Be thorough and realistic in your analysis. Look for actual fraud indicators."""
         # Construct the prompt for invoice analysis
         prompt = """You are an AI fraud detection agent for ShieldNet, analyzing invoices for potential fraud.
 
+**IMPORTANT: This system is in testing mode. Low amounts (under $1) are acceptable for mainnet testing and should NOT be flagged as fraud simply because they are low. Focus on actual fraud indicators like suspicious vendor names, duplicate charges, or inflated quantities - not the amount itself.**
+
 Analyze this invoice thoroughly and extract the following information:
 
 1. **Basic Information:**
@@ -224,21 +229,22 @@ Analyze this invoice thoroughly and extract the following information:
    - PO Match: Does this match purchase orders? (pass/fail/warning)
    - Hours Verification: Are hours reasonable? (pass/fail/warning)
    - Vendor Trust: Is this a trusted vendor? (pass/fail/warning)
-   - Amount Reasonableness: Is the amount reasonable? (pass/fail/warning)
    - Line Item Review: Do line items look legitimate? (pass/fail/warning)
+   - Format Validity: Does the invoice format look legitimate? (pass/fail/warning)
 
-4. **Fraud Indicators** to check for:
-   - Inflated hours or quantities
+4. **Fraud Indicators** to check for (IGNORE low amounts):
    - Duplicate charges
-   - Suspicious vendor names
-   - Missing purchase order references
-   - Unusual amounts
+   - Suspicious or fake vendor names
+   - Missing or invalid invoice numbers
    - Template similarities to known fraud
+   - Inconsistent information
 
 5. **Decision Rules:**
-   - APPROVED: fraud_score < 30, all critical checks pass
+   - APPROVED: fraud_score < 30, no critical red flags
    - HOLD: fraud_score 30-70, or warning flags present
-   - BLOCKED: fraud_score > 70, or failed critical checks
+   - BLOCKED: fraud_score > 70, or clear fraud indicators
+
+   **Note: Low amounts alone are NOT a reason to block or hold. Approve low-amount invoices if they otherwise look legitimate.**
 
 Return your analysis in this EXACT JSON format:
 {
@@ -255,7 +261,7 @@ Return your analysis in this EXACT JSON format:
   ]
 }
 
-Be thorough and realistic in your analysis. Look for actual fraud indicators."""
+Be thorough but remember: low amounts are acceptable for testing. Focus on real fraud indicators."""
 
         # Build content - use document for PDF, image for images
         if media_type == "application/pdf":
