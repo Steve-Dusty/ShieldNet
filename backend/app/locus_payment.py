@@ -83,7 +83,7 @@ async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) ->
         # Send payment via Locus MCP
         async with ClaudeSDKClient(options=options) as client:
             await client.query(
-                f'Get my wallet balance and information, then send ${amount} USDC '
+                f'Send ${amount} USDC '
                 f'to {RECIPIENT_ADDRESS} for invoice {invoice_id} (vendor: {vendor})'
             )
 

@@ -11,7 +11,10 @@ from app.models import (
 
 # In-memory databases
 invoices_db: Dict[str, InvoiceAnalysisResult] = {}
+
+# Threat analytics - NOT PERSISTED, resets every session
 threats_db: Dict[str, ThreatRecord] = {}
+
 transactions_db: Dict[str, Transaction] = {}
 
 # Wallet state - initialized from environment or defaults to 0
@@ -24,11 +27,12 @@ def _get_initial_balance() -> float:
     except ValueError:
         return 0.0
 
+# Wallet state - balance from blockchain, stats reset each session
 wallet_state = {
     "balance": _get_initial_balance(),
     "currency": "USDC",
-    "autoPaidThisMonth": 0.0,
-    "blockedThisMonth": 0.0
+    "autoPaidThisMonth": 0.0,  # Resets every session
+    "blockedThisMonth": 0.0    # Resets every session
 }
 
 
