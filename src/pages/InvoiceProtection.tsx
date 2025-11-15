@@ -1,5 +1,4 @@
 import { InvoiceAnalysis } from "@/components/InvoiceAnalysis";
-import { TreasuryPanel } from "@/components/TreasuryPanel";
 import { Shield, FileCheck, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -31,10 +30,9 @@ const InvoiceProtection = () => {
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Main Content */}
+        <div className="max-w-4xl mx-auto">
           <InvoiceAnalysis onAnalysisComplete={handleAnalysisComplete} />
-          <TreasuryPanel />
         </div>
 
         {/* Info Cards */}

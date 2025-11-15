@@ -12,6 +12,7 @@ from claude_agent_sdk import (
     PermissionResultDeny,
     ToolPermissionContext
 )
+from typing import Dict, Any
 
 async def main():
     try:
@@ -32,14 +33,18 @@ async def main():
             }
         }
 
-        # Define tool usage policy
+        # Hardcoded recipient address
+        RECIPIENT_ADDRESS = '0x45a5aaa6693a5aaf7357acaef1e54f403f150fba'
+
+        # Simple tool approval - just auto-approve all Locus tools
         async def can_use_tool(
             tool_name: str,
             tool_input: dict,
             context: ToolPermissionContext
         ):
-            """Auto-approve Locus tools, deny others."""
+            """Auto-approve all Locus tools. Approval logic is handled by other models."""
             if tool_name.startswith('mcp__locus__'):
+                print(f'✓ Allowing Locus tool: {tool_name}')
                 return PermissionResultAllow(behavior='allow')
             return PermissionResultDeny(
                 behavior='deny',
@@ -60,35 +65,37 @@ async def main():
 
         print('✓ MCP configured\n')
 
-        # 2. Run a query that uses MCP tools
-        print('Running sample query...\n')
+        # 2. Query MCP for wallet information and send payment
+        print('Querying Locus MCP...\n')
         print('─' * 50)
 
-        # Use ClaudeSDKClient for interactive conversation with can_use_tool callback
         async with ClaudeSDKClient(options=options) as client:
-            await client.query('Send $0.1 to 0x45a5aaa6693a5aaf7357acaef1e54f403f150fba')
+            # Query for wallet information
+            print('\n📊 Querying wallet information from Locus MCP...\n')
+
+            await client.query(
+                'tell me EXACTLY how much money is in 0xff05e68dfa157f930854249feca100dff9c6be73 inside my locushacks. i gave you my locus API key. this is a wallet inside mY locus. just find how much money is in it please. '
+            )
 
             async for message in client.receive_response():
                 if isinstance(message, AssistantMessage):
-                    # Print assistant responses
                     for block in message.content:
                         if isinstance(block, TextBlock):
                             print(f'Claude: {block.text}')
                         elif isinstance(block, ToolUseBlock):
-                            print(f'Using tool: {block.name}')
+                            print(f'🔧 Using tool: {block.name}')
+                            print(f'   Input: {block.input}')
                 elif isinstance(message, ResultMessage):
-                    print(f'\nTotal cost: ${message.total_cost_usd:.4f}')
+                    print(f'\n💵 API cost: ${message.total_cost_usd:.4f}')
                     if hasattr(message.usage, 'input_tokens'):
-                        # usage is an object
                         print(f'Input tokens: {message.usage.input_tokens}')
                         print(f'Output tokens: {message.usage.output_tokens}')
                     elif isinstance(message.usage, dict):
-                        # usage is a dictionary
                         print(f'Input tokens: {message.usage.get("input_tokens", "N/A")}')
                         print(f'Output tokens: {message.usage.get("output_tokens", "N/A")}')
 
         print('─' * 50)
-        print('\n✓ Query completed successfully!')
+        print('\n✓ Query completed!')
 
         print('\n🚀 Your Locus application is working!')
         print('\nNext steps:')
