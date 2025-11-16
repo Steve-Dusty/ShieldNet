@@ -126,20 +126,24 @@ async def analyze_invoice(file: UploadFile = File(...)):
         update_wallet_balance(result.amount, "pay")
 
         # Send payment via Locus MCP
-        try:
-            print(f"📤 Sending payment via Locus for approved invoice {result.invoiceId}")
-            payment_result = await send_payment_via_locus(
-                amount=result.amount,
-                invoice_id=result.invoiceId,
-                vendor=result.vendor
-            )
-            if payment_result['success']:
-                print(f"✓ Locus payment successful: {payment_result['message']}")
-            else:
-                print(f"⚠️ Locus payment failed: {payment_result['message']}")
-        except Exception as e:
-            print(f"❌ Locus payment error: {str(e)}")
-            # Don't fail the request if payment fails
+        if result.walletAddress:
+            try:
+                print(f"📤 Sending payment via Locus for approved invoice {result.invoiceId}")
+                payment_result = await send_payment_via_locus(
+                    amount=result.amount,
+                    invoice_id=result.invoiceId,
+                    vendor=result.vendor,
+                    wallet_address=result.walletAddress
+                )
+                if payment_result['success']:
+                    print(f"✓ Locus payment successful: {payment_result['message']}")
+                else:
+                    print(f"⚠️ Locus payment failed: {payment_result['message']}")
+            except Exception as e:
+                print(f"❌ Locus payment error: {str(e)}")
+                # Don't fail the request if payment fails
+        else:
+            print(f"⚠️ No wallet address found in invoice {result.invoiceId}, skipping payment")
 
     elif result.status == "blocked":
         update_wallet_balance(result.amount, "block")
@@ -232,20 +236,24 @@ async def analyze_invoice_stream(file: UploadFile = File(...)):
                         update_wallet_balance(result.amount, "pay")
 
                         # Send payment via Locus MCP
-                        try:
-                            print(f"📤 Sending payment via Locus for approved invoice {result.invoiceId}")
-                            payment_result = await send_payment_via_locus(
-                                amount=result.amount,
-                                invoice_id=result.invoiceId,
-                                vendor=result.vendor
-                            )
-                            if payment_result['success']:
-                                print(f"✓ Locus payment successful: {payment_result['message']}")
-                            else:
-                                print(f"⚠️ Locus payment failed: {payment_result['message']}")
-                        except Exception as e:
-                            print(f"❌ Locus payment error: {str(e)}")
-                            # Don't fail the request if payment fails
+                        if result.walletAddress:
+                            try:
+                                print(f"📤 Sending payment via Locus for approved invoice {result.invoiceId}")
+                                payment_result = await send_payment_via_locus(
+                                    amount=result.amount,
+                                    invoice_id=result.invoiceId,
+                                    vendor=result.vendor,
+                                    wallet_address=result.walletAddress
+                                )
+                                if payment_result['success']:
+                                    print(f"✓ Locus payment successful: {payment_result['message']}")
+                                else:
+                                    print(f"⚠️ Locus payment failed: {payment_result['message']}")
+                            except Exception as e:
+                                print(f"❌ Locus payment error: {str(e)}")
+                                # Don't fail the request if payment fails
+                        else:
+                            print(f"⚠️ No wallet address found in invoice {result.invoiceId}, skipping payment")
 
                     elif result.status == "blocked":
                         update_wallet_balance(result.amount, "block")

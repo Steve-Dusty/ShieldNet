@@ -59,6 +59,7 @@ Analyze this invoice thoroughly and extract the following information:
    - Vendor name
    - Total amount
    - Currency (usually USDC)
+   - **Wallet Address** (REQUIRED - Extract the payment/recipient wallet address from the invoice. Look for Ethereum/Base address starting with "0x" followed by 40 hexadecimal characters. This is where the payment will be sent.)
 
 2. **Fraud Detection Analysis:**
    - Calculate a fraud score (0-100, where 100 is definitely fraud)
@@ -91,6 +92,7 @@ Return your analysis in this EXACT JSON format:
   "invoiceId": "extracted invoice number",
   "vendor": "vendor name",
   "amount": total_amount_as_number,
+  "walletAddress": "0x...",
   "fraudScore": score_0_to_100,
   "confidence": confidence_0_to_100,
   "status": "approved|hold|blocked",
@@ -178,6 +180,12 @@ Be thorough but remember: low amounts are acceptable for testing. Focus on real 
             LocalCheck(**check) for check in analysis_data["localChecks"]
         ]
 
+        # Extract wallet address
+        wallet_address = analysis_data.get("walletAddress")
+        print(f"\n{'='*60}")
+        print(f"EXTRACTED WALLET ADDRESS: {wallet_address}")
+        print(f"{'='*60}\n")
+
         # Create the result
         result = InvoiceAnalysisResult(
             invoiceId=analysis_data["invoiceId"],
@@ -187,6 +195,7 @@ Be thorough but remember: low amounts are acceptable for testing. Focus on real 
             vendor=analysis_data["vendor"],
             amount=float(analysis_data["amount"]),
             currency="USDC",
+            walletAddress=wallet_address,
             explanation=analysis_data["explanation"],
             localChecks=local_checks,
             networkSignals=network_signals
@@ -219,6 +228,7 @@ Analyze this invoice thoroughly and extract the following information:
    - Vendor name
    - Total amount
    - Currency (usually USDC)
+   - **Wallet Address** (REQUIRED - Extract the payment/recipient wallet address from the invoice. Look for Ethereum/Base address starting with "0x" followed by 40 hexadecimal characters. This is where the payment will be sent.)
 
 2. **Fraud Detection Analysis:**
    - Calculate a fraud score (0-100, where 100 is definitely fraud)
@@ -251,6 +261,7 @@ Return your analysis in this EXACT JSON format:
   "invoiceId": "extracted invoice number",
   "vendor": "vendor name",
   "amount": total_amount_as_number,
+  "walletAddress": "0x...",
   "fraudScore": score_0_to_100,
   "confidence": confidence_0_to_100,
   "status": "approved|hold|blocked",
@@ -329,6 +340,12 @@ Be thorough but remember: low amounts are acceptable for testing. Focus on real 
             LocalCheck(**check) for check in analysis_data["localChecks"]
         ]
 
+        # Extract wallet address
+        wallet_address = analysis_data.get("walletAddress")
+        print(f"\n{'='*60}")
+        print(f"EXTRACTED WALLET ADDRESS: {wallet_address}")
+        print(f"{'='*60}\n")
+
         # Create the result
         result = InvoiceAnalysisResult(
             invoiceId=analysis_data["invoiceId"],
@@ -338,6 +355,7 @@ Be thorough but remember: low amounts are acceptable for testing. Focus on real 
             vendor=analysis_data["vendor"],
             amount=float(analysis_data["amount"]),
             currency="USDC",
+            walletAddress=wallet_address,
             explanation=analysis_data["explanation"],
             localChecks=local_checks,
             networkSignals=network_signals

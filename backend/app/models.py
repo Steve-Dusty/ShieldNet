@@ -26,6 +26,7 @@ class InvoiceAnalysisResult(BaseModel):
     vendor: str
     amount: float
     currency: str = "USDC"
+    walletAddress: Optional[str] = None  # Wallet address extracted from invoice
 
 
 class ThreatRecord(BaseModel):

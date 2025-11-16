@@ -11,12 +11,9 @@ from claude_agent_sdk import (
     PermissionResultDeny,
     ToolPermissionContext
 )
+    
 
-# Hardcoded recipient wallet address
-RECIPIENT_ADDRESS = '0x45a5aaa6693a5aaf7357acaef1e54f403f150fba'
-
-
-async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) -> dict:
+async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str, wallet_address: str) -> dict:
     """
     Send payment via Locus MCP after invoice approval.
 
@@ -24,6 +21,7 @@ async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) ->
         amount: Amount in USDC to send
         invoice_id: Invoice ID for tracking
         vendor: Vendor name for reference
+        wallet_address: Recipient wallet address from invoice
 
     Returns:
         dict with payment status and details
@@ -32,7 +30,7 @@ async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) ->
         print(f"💸 Initiating Locus payment for invoice {invoice_id}")
         print(f"   Amount: ${amount} USDC")
         print(f"   Vendor: {vendor}")
-        print(f"   Recipient: {RECIPIENT_ADDRESS}")
+        print(f"   Recipient: {wallet_address}")
 
         # Configure MCP connection to Locus
         mcp_servers = {
@@ -77,14 +75,14 @@ async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) ->
             'transaction_id': None,
             'message': '',
             'amount': amount,
-            'recipient': RECIPIENT_ADDRESS
+            'recipient': wallet_address
         }
 
         # Send payment via Locus MCP
         async with ClaudeSDKClient(options=options) as client:
             await client.query(
                 f'Send ${amount} USDC '
-                f'to {RECIPIENT_ADDRESS} for invoice {invoice_id} (vendor: {vendor})'
+                f'to {wallet_address} for invoice {invoice_id} (vendor: {vendor})'
             )
 
             response_text = ""
@@ -112,11 +110,11 @@ async def send_payment_via_locus(amount: float, invoice_id: str, vendor: str) ->
             'transaction_id': None,
             'message': f'Payment failed: {str(e)}',
             'amount': amount,
-            'recipient': RECIPIENT_ADDRESS
+            'recipient': wallet_address
         }
 
 
-def send_payment_sync(amount: float, invoice_id: str, vendor: str) -> dict:
+def send_payment_sync(amount: float, invoice_id: str, vendor: str, wallet_address: str) -> dict:
     """
     Synchronous wrapper for send_payment_via_locus.
 
@@ -124,8 +122,9 @@ def send_payment_sync(amount: float, invoice_id: str, vendor: str) -> dict:
         amount: Amount in USDC to send
         invoice_id: Invoice ID for tracking
         vendor: Vendor name for reference
+        wallet_address: Recipient wallet address from invoice
 
     Returns:
         dict with payment status and details
     """
-    return asyncio.run(send_payment_via_locus(amount, invoice_id, vendor))
+    return asyncio.run(send_payment_via_locus(amount, invoice_id, vendor, wallet_address))
